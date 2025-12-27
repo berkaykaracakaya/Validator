@@ -260,30 +260,6 @@ Open `cleanup-duplicates.html` in browser and follow instructions.
 **Debug LocalStorage:**
 Run script in `debug-storage.js` in browser console.
 
-## 🚧 Roadmap
-
-### Phase 2 (Planned)
-- [ ] Advanced endpoint filtering
-- [ ] Bulk endpoint actions
-- [ ] Settings page
-- [ ] False positive management page
-- [ ] More export formats (PDF, HTML, CSV)
-
-### Phase 3 (Future)
-- [ ] Dashboard widgets
-- [ ] Test history timeline
-- [ ] Result comparison
-- [ ] Charts and visualizations
-
-### Phase 4 (Nice to Have)
-- [ ] Configuration templates
-- [ ] Browser notifications
-- [ ] Sharing capabilities
-- [ ] Custom themes
-- [ ] Keyboard shortcuts
-
-See `ui_improvements_plan.md` for detailed feature planning.
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -291,10 +267,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📝 License
 
 This project is licensed under the MIT License.
-
-## 👤 Author
-
-Built with ❤️ by the Swagger API Validator team
 
 ## 🙏 Acknowledgments
 
