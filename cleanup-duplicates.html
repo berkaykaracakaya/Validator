@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleanup Duplicate Projects</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .duplicate {
+            background: #fef2f2;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ef4444;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        #log {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-line {
+            margin: 5px 0;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .warning {
+            color: #f59e0b;
+        }
+
+        .info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>🧹 Cleanup Duplicate Projects</h1>
+
+        <div class="stats" id="stats">
+            <strong>Loading...</strong>
+        </div>
+
+        <div id="duplicates"></div>
+
+        <div>
+            <button onclick="analyzeDuplicates()">🔍 Analyze Projects</button>
+            <button onclick="cleanupDuplicates()" class="danger">🗑️ Remove All Duplicates</button>
+            <button onclick="clearAll()" class="danger">⚠️ Clear All Projects</button>
+        </div>
+
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log')
+            const line = document.createElement('div')
+            line.className = `log-line ${type}`
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`
+            logDiv.appendChild(line)
+            logDiv.scrollTop = logDiv.scrollHeight
+        }
+
+        function analyzeDuplicates() {
+            const logDiv = document.getElementById('log')
+            logDiv.innerHTML = ''
+
+            log('Starting analysis...', 'info')
+
+            const projectsJson = localStorage.getItem('validator_projects')
+            if (!projectsJson) {
+                log('No projects found in LocalStorage', 'warning')
+                document.getElementById('stats').innerHTML = '<strong>No projects found</strong>'
+                return
+            }
+
+            const projects = JSON.parse(projectsJson)
+            log(`Found ${projects.length} total projects`, 'info')
+
+            // Group by URL
+            const byUrl = {}
+            projects.forEach(p => {
+                if (!byUrl[p.url]) {
+                    byUrl[p.url] = []
+                }
+                byUrl[p.url].push(p)
+            })
+
+            // Find duplicates
+            let totalDuplicates = 0
+            let duplicatesByUrl = []
+
+            Object.entries(byUrl).forEach(([url, projs]) => {
+                if (projs.length > 1) {
+                    const count = projs.length - 1 // -1 because we keep one
+                    totalDuplicates += count
+                    duplicatesByUrl.push({ url, count: projs.length, projects: projs })
+                    log(`❌ DUPLICATE: "${projs[0].name}" appears ${projs.length} times`, 'error')
+                } else {
+                    log(`✅ UNIQUE: "${projs[0].name}"`, 'success')
+                }
+            })
+
+            // Update stats
+            const statsHtml = `
+                <strong>Total Projects:</strong> ${projects.length}<br>
+                <strong>Unique URLs:</strong> ${Object.keys(byUrl).length}<br>
+                <strong>Duplicates to Remove:</strong> ${totalDuplicates}
+            `
+            document.getElementById('stats').innerHTML = statsHtml
+
+            // Show duplicates details
+            if (duplicatesByUrl.length > 0) {
+                const duplicatesHtml = duplicatesByUrl.map(dup => `
+                    <div class="duplicate">
+                        <strong>${dup.projects[0].name}</strong><br>
+                        <small>${dup.url}</small><br>
+                        <strong>Appears ${dup.count} times</strong> (will keep most recent, remove ${dup.count - 1})
+                    </div>
+                `).join('')
+                document.getElementById('duplicates').innerHTML = duplicatesHtml
+            } else {
+                document.getElementById('duplicates').innerHTML = ''
+            }
+
+            log(`Analysis complete. Found ${totalDuplicates} duplicates to remove.`, 'success')
+        }
+
+        function cleanupDuplicates() {
+            if (!confirm('This will remove all duplicate projects, keeping only the most recent version of each URL. Continue?')) {
+                return
+            }
+
+            log('Starting cleanup...', 'warning')
+
+            const projectsJson = localStorage.getItem('validator_projects')
+            if (!projectsJson) {
+                log('No projects to clean', 'warning')
+                return
+            }
+
+            const projects = JSON.parse(projectsJson)
+            log(`Starting with ${projects.length} projects`, 'info')
+
+            // Group by URL and keep most recent
+            const byUrl = {}
+            projects.forEach(p => {
+                if (!byUrl[p.url]) {
+                    byUrl[p.url] = p
+                } else {
+                    // Keep the one with most recent createdAt or updatedAt
+                    const existing = byUrl[p.url]
+                    const existingDate = new Date(existing.updatedAt || existing.createdAt)
+                    const currentDate = new Date(p.updatedAt || p.createdAt)
+
+                    if (currentDate > existingDate) {
+                        log(`Replacing older version of "${p.name}"`, 'info')
+                        byUrl[p.url] = p
+                    }
+                }
+            })
+
+            const uniqueProjects = Object.values(byUrl)
+            const removedCount = projects.length - uniqueProjects.length
+
+            // Save cleaned projects
+            localStorage.setItem('validator_projects', JSON.stringify(uniqueProjects))
+
+            log(`✅ Cleanup complete!`, 'success')
+            log(`Removed ${removedCount} duplicate projects`, 'success')
+            log(`Kept ${uniqueProjects.length} unique projects`, 'success')
+
+            // Re-analyze to show new state
+            setTimeout(() => analyzeDuplicates(), 500)
+        }
+
+        function clearAll() {
+            if (!confirm('⚠️ WARNING: This will delete ALL projects! Are you sure?')) {
+                return
+            }
+
+            localStorage.removeItem('validator_projects')
+            localStorage.removeItem('validator_test_results')
+            localStorage.removeItem('validator_false_positives')
+            localStorage.removeItem('validator_current_project')
+
+            log('All data cleared!', 'warning')
+            document.getElementById('stats').innerHTML = '<strong>All projects cleared</strong>'
+            document.getElementById('duplicates').innerHTML = ''
+        }
+
+        // Auto-analyze on load
+        window.onload = analyzeDuplicates
+    </script>
+</body>
+
+</html>

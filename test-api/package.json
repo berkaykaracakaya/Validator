@@ -1,0 +1,16 @@
+{
+    "name": "validator-test-api",
+    "version": "1.0.0",
+    "description": "Test API with intentional validation gaps for testing the Swagger API Validator",
+    "type": "module",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "node --watch src/server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.0",
+        "cors": "^2.8.5",
+        "swagger-ui-express": "^5.0.0",
+        "swagger-jsdoc": "^6.2.0"
+    }
+}
