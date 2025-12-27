@@ -96,6 +96,9 @@ export const useTestStore = defineStore('test', {
             this.isPaused = false
             this.testResults[endpoint.id] = []
 
+            // Save base URL for this endpoint
+            this.baseUrls[endpoint.id] = baseUrl
+
             // Build test cases
             const testCases = this.buildTestCases(endpoint, selectedValidations)
             this.progress.total = testCases.length

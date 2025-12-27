@@ -289,8 +289,12 @@ Recommendation: ${result.recommendation}
 }
 
 const runAgain = () => {
+  const baseUrl = testStore.baseUrls[route.params.id] || route.query.baseUrl || ''
   testStore.clearResults(route.params.id)
-  router.push(`/endpoint/${route.params.id}/test?baseUrl=${route.query.baseUrl}`)
+  router.push({
+    path: `/endpoint/${route.params.id}/test`,
+    query: { baseUrl }
+  })
 }
 
 const configure = () => {
